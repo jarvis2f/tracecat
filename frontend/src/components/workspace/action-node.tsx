@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ChevronDownIcon,
   CircleIcon,
+  Code,
   Container,
   Copy,
   EyeIcon,
@@ -57,6 +58,7 @@ export interface ActionNodeData {
 
 const tileIconMapping: Partial<Record<ActionType, LucideIcon>> = {
   webhook: Webhook,
+  code: Code,
   http_request: Globe,
   data_transform: Blend,
   "condition.compare": GitCompareArrows,

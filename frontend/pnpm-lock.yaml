@@ -80,7 +80,7 @@ dependencies:
   "@tanstack/react-table":
     specifier: ^8.13.2
     version: 8.13.2(react-dom@18.2.0)(react@18.2.0)
-  '@vercel/edge-config':
+  "@vercel/edge-config":
     specifier: ^1.1.0
     version: 1.1.0(typescript@5.3.3)
   axios:
@@ -3604,19 +3604,25 @@ packages:
     dev: true
 
   /@vercel/edge-config-fs@0.1.0:
-    resolution: {integrity: sha512-NRIBwfcS0bUoUbRWlNGetqjvLSwgYH/BqKqDN7vK1g32p7dN96k0712COgaz6VFizAm9b0g6IG6hR6+hc0KCPg==}
+    resolution:
+      {
+        integrity: sha512-NRIBwfcS0bUoUbRWlNGetqjvLSwgYH/BqKqDN7vK1g32p7dN96k0712COgaz6VFizAm9b0g6IG6hR6+hc0KCPg==,
+      }
     dev: false
 
   /@vercel/edge-config@1.1.0(typescript@5.3.3):
-    resolution: {integrity: sha512-es/4BzzKfyUilL5E1knR42MZHJqHMRfqitrnv18gVZZUha9ywrX3qNoCrPsNMJ1HS8xAAz/FJEyel7YFIDfKoQ==}
-    engines: {node: '>=14.6'}
+    resolution:
+      {
+        integrity: sha512-es/4BzzKfyUilL5E1knR42MZHJqHMRfqitrnv18gVZZUha9ywrX3qNoCrPsNMJ1HS8xAAz/FJEyel7YFIDfKoQ==,
+      }
+    engines: { node: ">=14.6" }
     peerDependencies:
-      '@opentelemetry/api': ^1.7.0
+      "@opentelemetry/api": ^1.7.0
     peerDependenciesMeta:
-      '@opentelemetry/api':
+      "@opentelemetry/api":
         optional: true
     dependencies:
-      '@vercel/edge-config-fs': 0.1.0
+      "@vercel/edge-config-fs": 0.1.0
       ts-essentials: 9.4.1(typescript@5.3.3)
     transitivePeerDependencies:
       - typescript
@@ -9362,9 +9368,12 @@ packages:
     dev: true
 
   /ts-essentials@9.4.1(typescript@5.3.3):
-    resolution: {integrity: sha512-oke0rI2EN9pzHsesdmrOrnqv1eQODmJpd/noJjwj2ZPC3Z4N2wbjrOEqnsEgmvlO2+4fBb0a794DCna2elEVIQ==}
+    resolution:
+      {
+        integrity: sha512-oke0rI2EN9pzHsesdmrOrnqv1eQODmJpd/noJjwj2ZPC3Z4N2wbjrOEqnsEgmvlO2+4fBb0a794DCna2elEVIQ==,
+      }
     peerDependencies:
-      typescript: '>=4.1.0'
+      typescript: ">=4.1.0"
     peerDependenciesMeta:
       typescript:
         optional: true

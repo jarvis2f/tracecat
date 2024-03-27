@@ -8,6 +8,7 @@ import {
   CheckSquare,
   ChevronsLeft,
   ChevronsRight,
+  Code,
   Container,
   FlaskConical,
   GitCompareArrows,
@@ -115,6 +116,12 @@ export function Workspace({
                     type: "webhook",
                     title: "Webhook",
                     icon: Webhook,
+                    variant: "ghost",
+                  },
+                  {
+                    type: "code",
+                    title: "Execute Code",
+                    icon: Code,
                     variant: "ghost",
                   },
                   {

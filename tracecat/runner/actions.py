@@ -241,6 +241,13 @@ class WebhookAction(Action):
     method: Literal["GET", "POST"] = "POST"
 
 
+class CodeAction(Action):
+    type: Literal["code"] = Field("code", frozen=True)
+
+    language: Literal["python"] = "python"
+    code: str
+
+
 class HTTPRequestAction(Action):
     type: Literal["http_request"] = Field("http_request", frozen=True)
 
@@ -313,6 +320,7 @@ class OpenCaseAction(Action):
 
 ACTION_FACTORY: dict[str, type[Action]] = {
     "webhook": WebhookAction,
+    "code": CodeAction,
     "http_request": HTTPRequestAction,
     "condition": ConditionAction,
     "llm": LLMAction,
@@ -324,6 +332,7 @@ ACTION_FACTORY: dict[str, type[Action]] = {
 ActionTrail = dict[str, ActionRunResult]
 ActionSubclass = (
     WebhookAction
+    | CodeAction
     | HTTPRequestAction
     | ConditionAction
     | LLMAction
@@ -799,6 +808,47 @@ async def run_open_case_action(
     return {"output": case.model_dump(), "output_type": "dict"}
 
 
+async def run_code_action(
+    language: str,
+    code: str,
+    # Common
+    action_run_kwargs: dict[str, Any] | None = None,
+    custom_logger: logging.Logger = logger,
+) -> dict[str, Any]:
+    """Run a code action."""
+    custom_logger.debug("Perform code action")
+    custom_logger.debug(f"{language = }")
+    custom_logger.debug(f"{code = }")
+
+    if language == "python":
+        try:
+            local_vars = {}
+            if action_run_kwargs:
+                local_vars.update(action_run_kwargs)
+
+            custom_logger.info(f"Executing code with {local_vars = }")
+            exec(code, globals(), local_vars)
+            # Process __return_value__ into a dictionary
+            return_value = local_vars.get("__return_value__")
+            output_dict = {}
+
+            # If __return_value__ is a dictionary, use it directly
+            if isinstance(return_value, dict):
+                output_dict = return_value
+
+            # If it's not a dictionary, create a key-value pair
+            elif return_value is not None:
+                output_dict["value"] = return_value
+
+            return {"output": output_dict, "output_type": "dict"}
+        except Exception as e:
+            custom_logger.error("Failed to execute code.", exc_info=e)
+            raise
+    else:
+        custom_logger.error(f"Unsupported language {language!r}.")
+        raise ValueError(f"Unsupported language {language!r}.")
+
+
 async def run_action(
     type: ActionType,
     action_run_id: str,
@@ -884,6 +934,7 @@ _ActionRunner = Callable[..., Awaitable[dict[str, Any]]]
 
 _ACTION_RUNNER_FACTORY: dict[ActionType, _ActionRunner] = {
     "webhook": run_webhook_action,
+    "code": run_code_action,
     "http_request": run_http_request_action,
     "condition": run_conditional_action,
     "llm": run_llm_action,

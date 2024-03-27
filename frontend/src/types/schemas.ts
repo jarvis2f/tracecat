@@ -4,6 +4,7 @@ import { stringToJSONSchema } from "@/types/validators"
 
 const actionTypes = [
   "webhook",
+  "code",
   "http_request",
   "data_transform",
   "condition.compare",

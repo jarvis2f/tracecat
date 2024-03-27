@@ -2,6 +2,7 @@ from typing import Literal
 
 ActionType = Literal[
     "webhook",
+    "code",
     "http_request",
     "data_transform",
     "condition.compare",

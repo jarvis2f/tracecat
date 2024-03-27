@@ -10,6 +10,11 @@ const WebhookActionSchema = z.object({
   method: z.enum(["GET", "POST"]),
 })
 
+const CodeActionSchema = z.object({
+  language: z.enum(["python"]),
+  code: z.string(),
+})
+
 const HTTPRequestActionSchema = z.object({
   url: z.string(),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
@@ -125,6 +130,7 @@ export type AllActionFieldSchemas = {
 export const actionSchemaMap = {
   http_request: HTTPRequestActionSchema,
   webhook: WebhookActionSchema,
+  code: CodeActionSchema,
   send_email: SendEmailActionSchema,
   "condition.compare": ConditionCompareActionSchema,
   "condition.regex": ConditionRegexActionSchema,
@@ -165,6 +171,23 @@ const actionFieldSchemas: Partial<AllActionFieldSchemas> = {
     path: { type: "input", disabled: true },
     secret: { type: "input", disabled: true },
     url: { type: "input", disabled: true, copyable: true },
+  },
+  code: {
+    language: {
+      type: "select",
+      options: ["python"],
+    },
+    code: {
+      type: "textarea",
+      placeholder: `def Hello():
+    print("Hello, {{ $.webhook.output.key }}")
+    return dict(
+        key="value"
+    )
+
+
+__return_value__ = Hello()`,
+    },
   },
   http_request: {
     url: { type: "input" },
