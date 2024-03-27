@@ -1,6 +1,6 @@
 import React, { Suspense } from "react"
-import { type Session } from "@supabase/supabase-js"
 
+import { Session } from "@/lib/auth"
 import { fetchLibraryWorkflows } from "@/lib/flow"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LibraryTile } from "@/components/library/workflow-tile"

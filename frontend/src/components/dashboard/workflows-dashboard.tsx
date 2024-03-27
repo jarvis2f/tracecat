@@ -1,7 +1,7 @@
 import { Suspense } from "react"
-import { type Session } from "@supabase/supabase-js"
 import { PlusCircle } from "lucide-react"
 
+import { Session } from "@/lib/auth"
 import { fetchAllWorkflows } from "@/lib/flow"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"

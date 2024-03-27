@@ -1,17 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { updateSession } from "@/utils/supabase/middleware"
-import { get } from "@vercel/edge-config"
+
+const UNPROTECTED_PATHS = ["/", "/auth/callback"]
 
 export async function middleware(request: NextRequest) {
-  if (
-    process.env.NEXT_PUBLIC_APP_ENV === "prod" &&
-    (await get("isUnderMaintenance"))
-  ) {
-    request.nextUrl.pathname = `/status`
-    console.log("Redirecting to status page")
-    return NextResponse.rewrite(request.nextUrl)
+  // 创建一个未修改的响应
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  // 检查用户是否登录
+  const accessToken = request.cookies.get("token")
+  const isLoggedIn = !!accessToken
+
+  // 如果用户未登录且访问的是受保护页面，则重定向到 /
+  if (!isLoggedIn && !UNPROTECTED_PATHS.includes(request.nextUrl.pathname)) {
+    console.debug("用户未登录，重定向到 /")
+    const redirectUrl = new URL("/", request.nextUrl.origin)
+    return NextResponse.redirect(redirectUrl)
   }
-  return await updateSession(request)
+
+  return response
 }
 
 export const config = {

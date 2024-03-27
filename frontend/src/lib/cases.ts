@@ -1,8 +1,8 @@
-import { Session } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import { caseSchema, type Case } from "@/types/schemas"
 import { getAuthenticatedClient } from "@/lib/api"
+import { Session } from "@/lib/auth"
 
 export async function getCases(
   session: Session | null,

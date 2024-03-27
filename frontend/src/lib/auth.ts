@@ -1,94 +1,46 @@
 "use server"
 
-import { headers } from "next/headers"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
-import { Session } from "@supabase/supabase-js"
 
+import { siteConfig } from "@/config/site"
 import { createWorkflow } from "@/lib/flow"
 
-type ThirdPartyAuthProvider = "google" | "github"
+export interface Session {
+  access_token: string
+  user: User
+}
+
+export interface User {
+  id: string
+  email: string
+  name: string
+  avatarUrl: string
+}
 
 export async function signInFlow(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
-  const supabase = createClient()
 
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username: email, password }),
   })
 
-  if (error || !session) {
-    console.error("error", error, "session", session)
-    return redirect("/?level=error&message=Could not authenticate user")
+  if (!response.ok) {
+    console.error("login failed")
+    return redirect("/?level=error&message=Username or password is incorrect")
   }
 
-  await newUserFlow(session)
+  const session: Session = await response.json()
+  cookies().set("token", session.access_token)
+
+  // await newUserFlow(session)
 
   return redirect("/workflows")
-}
-
-export async function signUpFlow(formData: FormData) {
-  const origin = headers().get("origin")
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-  const supabase = createClient()
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  })
-
-  if (error) {
-    return redirect("/?level=error&message=Could not authenticate user")
-  }
-
-  return redirect("/?message=Check your email to continue")
-}
-
-export async function thirdPartyAuthFlow(provider: ThirdPartyAuthProvider) {
-  const origin = headers().get("origin")
-  const supabase = createClient()
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      queryParams: {
-        access_type: "offline",
-        prompt: "consent",
-      },
-      redirectTo: `${origin}/auth/callback`,
-    },
-  })
-
-  if (error) {
-    return redirect("/?level=error&message=Could not authenticate user")
-  }
-  return redirect(data.url)
-}
-
-export async function signInWithEmailMagicLink(formData: FormData) {
-  const origin = headers().get("origin")
-  const email = formData.get("email") as string
-  const supabase = createClient()
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  })
-  console.log(data, error)
-
-  if (error) {
-    return redirect("/?level=error&message=Could not authenticate user")
-  }
-  return redirect("/?message=Check your email to continue")
 }
 
 export async function newUserFlow(session: Session) {
@@ -114,4 +66,20 @@ export async function newUserFlow(session: Session) {
     )
     console.log("Created first workflow for new user")
   }
+}
+
+export async function getServerSession(): Promise<Session | null> {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/session`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${cookies().get("token")?.value}`,
+    },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  return response.json()
 }

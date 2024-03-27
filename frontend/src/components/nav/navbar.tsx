@@ -2,8 +2,8 @@
 
 import React from "react"
 import Link from "next/link"
-import { Session } from "@supabase/supabase-js"
 
+import { Session } from "@/lib/auth"
 import { Icons } from "@/components/icons"
 import { CommunityNav } from "@/components/nav/community"
 import DynamicNavbar from "@/components/nav/dyn-nav"

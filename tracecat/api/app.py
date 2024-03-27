@@ -4,7 +4,7 @@ from typing import Annotated, Any
 
 import polars as pl
 import tantivy
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Body
 from fastapi.responses import StreamingResponse
@@ -18,7 +18,7 @@ from tracecat.auth import (
     Role,
     authenticate_service,
     authenticate_user,
-    authenticate_user_or_service,
+    authenticate_user_or_service, generate_jwt, oauth2_scheme,
 )
 from tracecat.config import TRACECAT__APP_ENV, TRACECAT__RUNNER_URL
 from tracecat.db import (
@@ -70,7 +70,7 @@ from tracecat.types.api import (
     WebhookResponse,
     WorkflowMetadataResponse,
     WorkflowResponse,
-    WorkflowRunResponse,
+    WorkflowRunResponse, LoginParams, SessionResponse,
 )
 from tracecat.types.cases import Case, CaseMetrics
 
@@ -129,6 +129,43 @@ def root() -> dict[str, str]:
 @app.get("/health")
 def check_health() -> dict[str, str]:
     return {"message": "Hello world. I am the API. This is the health endpoint."}
+
+
+@app.post("/login")
+def login(params: LoginParams, response: Response) -> SessionResponse:
+    with Session(engine) as session:
+        statement = select(User).where(User.username == params.username)
+        result = session.exec(statement)
+        try:
+            user = result.one()
+        except NoResultFound as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            ) from e
+        if user.password == params.password:
+            token = generate_jwt(user.id)
+            response.set_cookie(key="token", value=token)
+            return SessionResponse(
+                access_token=token,
+                user=dict(
+                    id=user.id,
+                )
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            )
+
+
+@app.get("/session")
+def get_session(role: Annotated[Role, Depends(authenticate_user)],
+                token: Annotated[str, Depends(oauth2_scheme)]) -> SessionResponse:
+    return SessionResponse(
+        access_token=token,
+        user=dict(
+            id=role.user_id,
+        )
+    )
 
 
 ### Workflows
@@ -836,8 +873,8 @@ def get_webhook(
 
 @app.delete("/webhooks/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_webhook(
-    role: Annotated[Role, Depends(authenticate_user)],
-    webhook_id: str,
+        role: Annotated[Role, Depends(authenticate_user)],
+        webhook_id: str,
 ) -> None:
     """Delete a Webhook by ID."""
     with Session(engine) as session:
@@ -853,8 +890,8 @@ def delete_webhook(
 
 @app.get("/webhooks/search")
 def search_webhooks(
-    role: Annotated[Role, Depends(authenticate_user)],
-    params: SearchWebhooksParams,
+        role: Annotated[Role, Depends(authenticate_user)],
+        params: SearchWebhooksParams,
 ) -> WebhookResponse:
     with Session(engine) as session:
         statement = select(Webhook)
@@ -883,10 +920,10 @@ def search_webhooks(
 
 @app.post("/authenticate/webhooks/{webhook_id}/{secret}")
 def authenticate_webhook(
-    # TODO: Add user id to Role
-    _role: Annotated[Role, Depends(authenticate_service)],  # M2M
-    webhook_id: str,
-    secret: str,
+        # TODO: Add user id to Role
+        _role: Annotated[Role, Depends(authenticate_service)],  # M2M
+        webhook_id: str,
+        secret: str,
 ) -> AuthenticateWebhookResponse:
     with Session(engine) as session:
         statement = select(Webhook).where(Webhook.id == webhook_id)
@@ -938,8 +975,8 @@ SUPPORTED_EVENT_AGGS = {
 
 @app.get("/events/search")
 def search_events(
-    role: Annotated[Role, Depends(authenticate_user)],
-    params: EventSearchParams,
+        role: Annotated[Role, Depends(authenticate_user)],
+        params: EventSearchParams,
 ) -> list[Event]:
     """Search for events based on query parameters.
 
@@ -967,9 +1004,9 @@ def search_events(
 
 @app.post("/workflows/{workflow_id}/cases", status_code=status.HTTP_201_CREATED)
 def create_case(
-    role: Annotated[Role, Depends(authenticate_service)],  # M2M
-    workflow_id: str,
-    cases: list[CaseParams],
+        role: Annotated[Role, Depends(authenticate_service)],  # M2M
+        workflow_id: str,
+        cases: list[CaseParams],
 ):
     db = create_vdb_conn()
     tbl = db.open_table("cases")
@@ -983,9 +1020,9 @@ def create_case(
 
 @app.get("/workflows/{workflow_id}/cases")
 def list_cases(
-    role: Annotated[Role, Depends(authenticate_user)],
-    workflow_id: str,
-    limit: int = 100,
+        role: Annotated[Role, Depends(authenticate_user)],
+        workflow_id: str,
+        limit: int = 100,
 ) -> list[Case]:
     """List all cases under a workflow.
 
@@ -1006,9 +1043,9 @@ def list_cases(
 
 @app.get("/workflows/{workflow_id}/cases/{case_id}")
 def get_case(
-    role: Annotated[Role, Depends(authenticate_user)],
-    workflow_id: str,
-    case_id: str,
+        role: Annotated[Role, Depends(authenticate_user)],
+        workflow_id: str,
+        case_id: str,
 ) -> Case:
     """Get a specific case by ID under a workflow."""
     db = create_vdb_conn()
@@ -1028,10 +1065,10 @@ def get_case(
 
 @app.post("/workflows/{workflow_id}/cases/{case_id}")
 def update_case(
-    role: Annotated[Role, Depends(authenticate_user)],
-    workflow_id: str,
-    case_id: str,
-    params: CaseParams,
+        role: Annotated[Role, Depends(authenticate_user)],
+        workflow_id: str,
+        case_id: str,
+        params: CaseParams,
 ):
     """Update a specific case by ID under a workflow."""
     updated_case = Case.from_params(params, owner_id=role.user_id, id=case_id)
@@ -1045,9 +1082,9 @@ def update_case(
 
 @app.get("/workflows/{workflow_id}/cases/{case_id}/metrics")
 def get_case_metrics(
-    role: Annotated[Role, Depends(authenticate_user)],
-    workflow_id: str,
-    case_id: str,
+        role: Annotated[Role, Depends(authenticate_user)],
+        workflow_id: str,
+        case_id: str,
 ) -> CaseMetrics:
     """Get a specific case by ID under a workflow."""
     db = create_vdb_conn()
@@ -1068,7 +1105,7 @@ def get_case_metrics(
 
 @app.get("/case-actions")
 def list_case_actions(
-    role: Annotated[Role, Depends(authenticate_user)],
+        role: Annotated[Role, Depends(authenticate_user)],
 ) -> list[CaseAction]:
     with Session(engine) as session:
         statement = select(CaseAction).where(
@@ -1083,8 +1120,8 @@ def list_case_actions(
 
 @app.post("/case-actions")
 def create_case_action(
-    role: Annotated[Role, Depends(authenticate_user)],
-    params: CaseActionParams,
+        role: Annotated[Role, Depends(authenticate_user)],
+        params: CaseActionParams,
 ) -> CaseAction:
     case_action = CaseAction(owner_id=role.user_id, **params.model_dump())
     with Session(engine) as session:
@@ -1096,8 +1133,8 @@ def create_case_action(
 
 @app.delete("/case-actions/{case_action_id}")
 def delete_case_action(
-    role: Annotated[Role, Depends(authenticate_user)],
-    case_action_id: str,
+        role: Annotated[Role, Depends(authenticate_user)],
+        case_action_id: str,
 ):
     with Session(engine) as session:
         statement = select(CaseAction).where(
@@ -1120,7 +1157,7 @@ def delete_case_action(
 
 @app.get("/case-contexts")
 def list_case_contexts(
-    role: Annotated[Role, Depends(authenticate_user)],
+        role: Annotated[Role, Depends(authenticate_user)],
 ) -> list[CaseContext]:
     with Session(engine) as session:
         statement = select(CaseContext).where(
@@ -1135,8 +1172,8 @@ def list_case_contexts(
 
 @app.post("/case-contexts")
 def create_case_context(
-    role: Annotated[Role, Depends(authenticate_user)],
-    params: CaseContextParams,
+        role: Annotated[Role, Depends(authenticate_user)],
+        params: CaseContextParams,
 ) -> CaseContext:
     case_context = CaseContext(owner_id=role.user_id, **params.model_dump())
     with Session(engine) as session:

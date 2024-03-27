@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
-import { type Session } from "@supabase/supabase-js"
 import axios from "axios"
+
+import { Session } from "./auth"
 
 const client = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,

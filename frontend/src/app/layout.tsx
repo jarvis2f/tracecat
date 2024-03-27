@@ -4,10 +4,9 @@ import { Metadata } from "next"
 import dynamic from "next/dynamic"
 import { DefaultQueryClientProvider } from "@/providers/query"
 import { SessionContextProvider } from "@/providers/session"
-import { createClient } from "@/utils/supabase/server"
-import { Session } from "@supabase/supabase-js"
 
 import { siteConfig } from "@/config/site"
+import { getServerSession, Session } from "@/lib/auth"
 import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
@@ -40,11 +39,7 @@ if (process.env.NEXT_PUBLIC_APP_ENV === "prod") {
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) {
-  const supabase = createClient()
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const session = await getServerSession()
 
   return (
     <>

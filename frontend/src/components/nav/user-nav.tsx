@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { useSessionContext } from "@/providers/session"
-import { User } from "@supabase/supabase-js"
 import { BookText, KeyRound, LogOut, Settings, UsersRound } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
+import { User } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -38,8 +38,8 @@ export default function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <UserAvatar
-            src={user?.user_metadata?.avatar_url || userDefaults.avatarUrl}
-            alt={user?.user_metadata?.alt || userDefaults.alt}
+            src={user?.avatarUrl || userDefaults.avatarUrl}
+            alt={user?.name || userDefaults.alt}
           />
         </Button>
       </DropdownMenuTrigger>
@@ -47,7 +47,7 @@ export default function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user?.user_metadata.name ?? userDefaults.name}
+              {user?.name ?? userDefaults.name}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email ?? userDefaults.email}

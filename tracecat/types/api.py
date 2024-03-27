@@ -82,6 +82,16 @@ class ActionRunResponse(BaseModel):
         return cls(**run.model_dump(exclude=["result"]), result=dict_result)
 
 
+class SessionResponse(BaseModel):
+    access_token: str
+    user: dict[str, Any]
+
+
+class LoginParams(BaseModel):
+    username: str
+    password: str
+
+
 class CreateActionRunParams(BaseModel):
     action_run_id: str  # This is deterministically defined in the runner
     workflow_run_id: str

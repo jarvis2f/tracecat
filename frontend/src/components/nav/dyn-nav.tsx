@@ -4,8 +4,8 @@ import React from "react"
 import { type Params } from "next/dist/shared/lib/router/utils/route-matcher"
 import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
-import { Session } from "@supabase/supabase-js"
 
+import { Session } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import WorkflowsNav from "@/components/nav/workflows-nav"
 

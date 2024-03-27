@@ -6,10 +6,10 @@ import {
   CheckIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons"
-import { Session } from "@supabase/supabase-js"
 import { useQuery } from "@tanstack/react-query"
 
 import { WorkflowMetadata } from "@/types/schemas"
+import { Session } from "@/lib/auth"
 import { fetchAllWorkflows } from "@/lib/flow"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"

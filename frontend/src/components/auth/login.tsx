@@ -2,16 +2,16 @@ import React from "react"
 import Image from "next/image"
 // import Link from "next/link"
 import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
 import TracecatIcon from "public/icon.png"
 
+import { getServerSession } from "@/lib/auth"
 import {
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { PasswordlessSignInForm, SignInForm } from "@/components/auth/forms"
+import { SignInForm } from "@/components/auth/forms"
 import {
   GithubOAuthButton,
   GoogleOAuthButton,
@@ -22,10 +22,7 @@ export default async function Login({
 }: {
   searchParams: { message: string }
 }) {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const session = await getServerSession()
 
   if (session) {
     return redirect("/workflows")
@@ -81,7 +78,6 @@ export default async function Login({
                 </div>
               </div>
             </CardContent>
-            <PasswordlessSignInForm searchParams={searchParams} />
           </>
         )}
       </div>

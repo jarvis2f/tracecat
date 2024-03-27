@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { WorkflowProvider } from "@/providers/workflow"
-import { createClient } from "@/utils/supabase/server"
 
+import { getServerSession } from "@/lib/auth"
 import Navbar from "@/components/nav/navbar"
 
 export const metadata: Metadata = {
@@ -13,11 +13,7 @@ export default async function WorkflowsLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const session = await getServerSession()
   return (
     <WorkflowProvider session={session}>
       <div className="no-scrollbar flex h-screen max-h-screen flex-col">

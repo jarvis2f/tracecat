@@ -1,7 +1,7 @@
 import React from "react"
 import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
 
+import { getServerSession } from "@/lib/auth"
 import Login from "@/components/auth/login"
 
 export default async function HomePage({
@@ -9,10 +9,7 @@ export default async function HomePage({
 }: {
   searchParams: { message: string }
 }) {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const session = await getServerSession()
 
   if (session) {
     return redirect("/workflows")

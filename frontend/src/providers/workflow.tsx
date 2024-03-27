@@ -9,10 +9,10 @@ import React, {
   useState,
 } from "react"
 import { useParams } from "next/navigation"
-import { Session } from "@supabase/supabase-js"
 import { useQuery } from "@tanstack/react-query"
 
 import { Workflow } from "@/types/schemas"
+import { Session } from "@/lib/auth"
 import { fetchWorkflow, updateWorkflow } from "@/lib/flow"
 
 type WorkflowContextType = {

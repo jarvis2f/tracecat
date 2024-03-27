@@ -2,9 +2,9 @@
 
 import React, { useState } from "react"
 import { useSession } from "@/providers/session"
-import { type Session } from "@supabase/supabase-js"
 
 import { getAuthenticatedClient, type Client } from "@/lib/api"
+import { Session } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import {
   ContextMenu,
@@ -41,15 +41,18 @@ export interface AuxClickMenuSubProps<TData>
   type: "sub"
   items?: AuxClickMenuOptionProps<TData>[]
 }
+
 interface AuxClickMenuRadioProps<TData> extends BaseAuxClickMenuOption<TData> {
   type: "radio"
   defaultValue?: string
   items?: { title: string; value: string }[]
 }
+
 interface AuxClickMenuCheckboxProps<TData>
   extends BaseAuxClickMenuOption<TData> {
   type: "checkbox"
 }
+
 interface AuxClickMenuSeparatorProps<TData>
   extends BaseAuxClickMenuOption<TData> {
   type: "separator"
@@ -67,6 +70,7 @@ export interface AuxClickMenuProps<TData>
   options?: AuxClickMenuOptionProps<TData>[]
   data: TData // Currently working with a Column<Case> type
 }
+
 export default function AuxClickMenu<TData>({
   className,
   children,
@@ -92,6 +96,7 @@ export default function AuxClickMenu<TData>({
     children
   )
 }
+
 function DynamicAuxClickMenuOption<TData>(
   props: AuxClickMenuOptionProps<TData>
 ) {

@@ -1,4 +1,3 @@
-import { Session } from "@supabase/supabase-js"
 import { ReactFlowInstance } from "reactflow"
 import { z } from "zod"
 
@@ -17,6 +16,8 @@ import {
 } from "@/types/schemas"
 import { getAuthenticatedClient } from "@/lib/api"
 import type { BaseActionForm } from "@/components/workspace/action-panel/schemas"
+
+import { Session } from "./auth"
 
 export async function updateDndFlow(
   maybeSession: Session | null,

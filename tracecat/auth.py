@@ -151,6 +151,11 @@ def decrypt_key(encrypted_api_key: bytes) -> str:
     return decrypted_api_key
 
 
+def generate_jwt(user_id: str) -> str:
+    payload = {"sub": user_id}
+    return jwt.encode(payload, os.environ["TRACECAT__JWT_SECRET"], algorithm="HS256")
+
+
 async def _validate_user_exists_in_db(user_id: str) -> tuple[str, ...] | None:
     """Check that a user exists in supabase and is authenticated."""
     conn_manager = await psycopg.AsyncConnection.connect(
@@ -171,8 +176,8 @@ async def _get_role_from_jwt(token: str | bytes) -> Role:
     try:
         payload = jwt.decode(
             token,
-            key=os.environ["SUPABASE_JWT_SECRET"],
-            algorithms=os.environ["SUPABASE_JWT_ALGORITHM"],
+            key=os.environ["TRACECAT__JWT_SECRET"],
+            algorithms="HS256",
             # NOTE: Workaround, not sure if there are alternatives
             options={"verify_aud": False},
         )
@@ -185,9 +190,9 @@ async def _get_role_from_jwt(token: str | bytes) -> Role:
         raise CREDENTIALS_EXCEPTION from e
 
     # Validate this against supabase
-    if await _validate_user_exists_in_db(user_id) is None:
-        logger.error("User not authenticated")
-        raise CREDENTIALS_EXCEPTION
+    # if await _validate_user_exists_in_db(user_id) is None:
+    #     logger.error("User not authenticated")
+    #     raise CREDENTIALS_EXCEPTION
     role = Role(type="user", user_id=user_id)
     ctx_session_role.set(role)
     return role
