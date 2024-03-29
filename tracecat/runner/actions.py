@@ -483,8 +483,6 @@ async def start_action_run(
             # Exception was raised before the action was marked as successful
             action_run_status_store[ar_id] = ActionRunStatus.FAILURE
 
-        running_jobs_store.pop(ar_id, None)
-
     # Add trail to events store
     try:
         _index_events(
@@ -500,37 +498,35 @@ async def start_action_run(
     except Exception as e:
         custom_logger.error("Tantivy indexing failed.", exc_info=e)
 
+    # Handle downstream dependencies
+    if run_status == "success" and result.should_continue:
+        try:
+            downstream_deps_ar_ids = action_run.downstream_dependencies(
+                workflow=workflow_ref, action_key=action_key
+            )
+            custom_logger.debug(f"Action run {ar_id!r} broadcasting results to downstream dependencies {downstream_deps_ar_ids}.")
+            # Broadcast the results to the next actions and enqueue them
+            for next_ar_id in downstream_deps_ar_ids:
+                if next_ar_id not in action_run_status_store:
+                    action_run_status_store[next_ar_id] = ActionRunStatus.QUEUED
+                    custom_logger.critical(f"Enqueueing action run {next_ar_id}.")
+                    ready_jobs_queue.put_nowait(
+                        ActionRun(
+                            workflow_run_id=action_run.workflow_run_id,
+                            action_key=parse_action_run_id(next_ar_id, "action_key"),
+                        )
+                    )
+        except Exception as e:
+            custom_logger.error(
+                f"Action run {ar_id!r} failed to broadcast results to downstream dependencies.",
+                exc_info=e,
+            )
+
     await log_complete_action_run(
         action_run, status=run_status, error_msg=error_msg, result=result
     )
 
-    # Handle downstream dependencies
-    if run_status != "success":
-        custom_logger.warning(f"Action run {ar_id!r} stopping due to failure.")
-        return
-    custom_logger.debug(f"Remaining action runs: {running_jobs_store.keys()}")
-    if not result.should_continue:
-        custom_logger.info(f"Action run {ar_id!r} stopping due to stop signal.")
-        return
-    try:
-        downstream_deps_ar_ids = action_run.downstream_dependencies(
-            workflow=workflow_ref, action_key=action_key
-        )
-        # Broadcast the results to the next actions and enqueue them
-        for next_ar_id in downstream_deps_ar_ids:
-            if next_ar_id not in action_run_status_store:
-                action_run_status_store[next_ar_id] = ActionRunStatus.QUEUED
-                ready_jobs_queue.put_nowait(
-                    ActionRun(
-                        workflow_run_id=action_run.workflow_run_id,
-                        action_key=parse_action_run_id(next_ar_id, "action_key"),
-                    )
-                )
-    except Exception as e:
-        custom_logger.error(
-            f"Action run {ar_id!r} failed to broadcast results to downstream dependencies.",
-            exc_info=e,
-        )
+    running_jobs_store.pop(ar_id, None)
 
 
 async def run_webhook_action(
@@ -990,8 +986,8 @@ async def log_complete_action_run(
 ) -> None:
     """Update a workflow run."""
     logger.info(f"Log update action run {action_run.id} with status {status}.")
-    logger.critical(f"{error_msg =}")
-    logger.critical(f"{result =}")
+    # logger.critical(f"{error_msg =}")
+    # logger.critical(f"{result =}")
     action_id = action_key_to_id(action_run.action_key)
     params = UpdateActionRunParams(
         status=status,
