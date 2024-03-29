@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Body
 from fastapi.responses import StreamingResponse
-from sqlalchemy import Engine, or_
+from sqlalchemy import Engine, or_, text
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
@@ -385,6 +385,7 @@ def list_workflow_runs(
                 WorkflowRun.owner_id == role.user_id,
                 WorkflowRun.workflow_id == workflow_id,
             )
+            .order_by(text('WorkflowRun.created_at desc'))
             .limit(limit)
         )
         results = session.exec(statement)
