@@ -198,7 +198,7 @@ function WorkflowRunItem({
                   align="start"
                   className="m-0 w-[500px] rounded-md border-none p-0"
                 >
-                  <Card className="rounded-md p-1">
+                  <Card className="h-[800px] rounded-md p-1">
                     {result ? (
                       <SyntaxHighlighter
                         language={result ? "json" : undefined}
@@ -208,7 +208,9 @@ function WorkflowRunItem({
                         customStyle={{
                           width: "100%",
                           maxWidth: "100%",
-                          overflowX: "auto",
+                          height: "100%",
+                          maxHeight: "100%",
+                          overflow: "auto",
                         }}
                         codeTagProps={{
                           className:
